@@ -1,8 +1,8 @@
 {
     "name": "antigravity-auto-accept-final",
-    "displayName": "Antigravity Auto-Accept by HWG",
+    "displayName": "Auto-Accept for Antigravity",
     "description": "Automatically accept Antigravity execution prompts",
-    "version": "0.0.14",
+    "version": "0.0.15",
     "publisher": "hanguangwu",
     "icon": "icon.png",
     "repository": {
