@@ -10,37 +10,11 @@ let pollingInterval: NodeJS.Timeout | undefined;
 let myStatusBarItem: vscode.StatusBarItem;
 let isAutoAcceptEnabled = true;
 
-const getIdleScriptPath = path.join(os.tmpdir(), 'antigravity_getIdle.ps1');
-
-function ensureIdleScript() {
-    if (!fs.existsSync(getIdleScriptPath)) {
-        const psCode = `Add-Type @'
-using System;
-using System.Runtime.InteropServices;
-public class IdleTime {
-    [StructLayout(LayoutKind.Sequential)]
-    struct LASTINPUTINFO {
-        public uint cbSize;
-        public uint dwTime;
-    }
-    [DllImport("user32.dll")]
-    static extern bool GetLastInputInfo(ref LASTINPUTINFO plii);
-    public static uint GetIdle() {
-        LASTINPUTINFO lii = new LASTINPUTINFO();
-        lii.cbSize = (uint)Marshal.SizeOf(typeof(LASTINPUTINFO));
-        GetLastInputInfo(ref lii);
-        return (uint)Environment.TickCount - lii.dwTime;
-    }
-}
-'@
-[IdleTime]::GetIdle()`;
-        fs.writeFileSync(getIdleScriptPath, psCode, 'utf8');
-    }
-}
+let getIdleScriptPath: string;
 
 export function activate(context: vscode.ExtensionContext) {
     console.log('Antigravity Vintage Polling Auto-Accept is now active!');
-    ensureIdleScript();
+    getIdleScriptPath = context.asAbsolutePath('getIdle.ps1');
 
     const provider = new SettingsViewProvider(context.extensionUri);
     context.subscriptions.push(

@@ -2,7 +2,7 @@
     "name": "antigravity-auto-accept-final",
     "displayName": "Auto-Accept for Antigravity",
     "description": "Automatically accept Antigravity execution prompts",
-    "version": "0.0.15",
+    "version": "0.0.16",
     "publisher": "hanguangwu",
     "icon": "icon.png",
     "repository": {
