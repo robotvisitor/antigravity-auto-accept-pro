@@ -2,7 +2,8 @@
     "name": "antigravity-auto-accept-final",
     "displayName": "Auto-Accept for Antigravity",
     "description": "Automatically accept Antigravity execution prompts",
-    "version": "0.0.16",
+    "version": "0.0.18",
+    "license": "MIT",
     "publisher": "hanguangwu",
     "icon": "icon.png",
     "repository": {
@@ -68,7 +69,8 @@
     "scripts": {
         "vscode:prepublish": "npm run compile",
         "compile": "tsc -p ./",
-        "watch": "tsc -watch -p ./"
+        "watch": "tsc -watch -p ./",
+        "package": "node -e \"const fs=require('fs'); if(!fs.existsSync('release')) fs.mkdirSync('release');\" && npx vsce package --out release"
     },
     "devDependencies": {
         "@types/vscode": "^1.80.0",

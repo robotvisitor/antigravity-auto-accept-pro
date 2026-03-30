@@ -14,7 +14,7 @@ A VS Code extension that automatically accepts Antigravity execution prompts by 
 - **Windows OS Only**: Relies on PowerShell and `user32.dll` to read global idle time.
 
 ### Installation & Usage
-1. Search for `Antigravity Auto-Accept` in the VS Code Extensions Marketplace and install it.
+1. Search for `Auto-Accept for Antigravity` in the VS Code Extensions Marketplace and install it.
 2. Ensure `AutoAccept: ON` or `wait 12s` is visible in the bottom-right status bar.
 4. Trigger an Antigravity manual-approval prompt.
 5. Stop moving the mouse or keyboard. The status bar will count down from 12s.
@@ -36,7 +36,7 @@ A VS Code extension that automatically accepts Antigravity execution prompts by 
 - **仅限 Windows 系统**：底层强依赖 PowerShell 及 `user32.dll` 以读取全局空闲状态，Mac/Linux 无法运行。
 
 ### 安装与使用
-1. 在 VS Code 插件市场（Extensions Marketplace）中搜索 `Antigravity Auto-Accept` 并一键安装。
+1. 在 VS Code 插件市场（Extensions Marketplace）中搜索 `Auto-Accept for Antigravity` 并一键安装。
 2. 观察 VS Code 右下角状态栏，确保显示为 `AutoAccept: ON`（或倒计时的时钟）。
 4. 触发任何需要点击的 Antigravity 确认蓝框。
 6. 倒数结束，插件会自动锁定聊天面板，并帮您模拟物理按下 `Alt+Enter` 放行指令。
