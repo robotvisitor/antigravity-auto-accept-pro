@@ -2,9 +2,16 @@
     "name": "antigravity-auto-accept-pro",
     "displayName": "Antigravity Auto-Accept",
     "description": "Automatically accept Antigravity execution prompts",
-    "version": "0.0.10",
+    "version": "0.0.11",
     "publisher": "hanguangwu",
     "icon": "icon.png",
+    "repository": {
+        "type": "git",
+        "url": "https://github.com/robotvisitor/antigravity-auto-accept-pro.git"
+    },
+    "bugs": {
+        "url": "https://github.com/robotvisitor/antigravity-auto-accept-pro/issues"
+    },
     "engines": {
         "vscode": "^1.80.0"
     },
