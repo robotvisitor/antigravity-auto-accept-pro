@@ -1,0 +1,146 @@
+"use strict";
+Object.defineProperty(exports, "__esModule", { value: true });
+exports.activate = activate;
+exports.deactivate = deactivate;
+const child_process_1 = require("child_process");
+const os = require("os");
+const path = require("path");
+const fs = require("fs");
+const vscode = require("vscode");
+const SettingsViewProvider_1 = require("./SettingsViewProvider");
+let isTriggering = false;
+let pollingInterval;
+let myStatusBarItem;
+let isAutoAcceptEnabled = true;
+const getIdleScriptPath = path.join(os.tmpdir(), 'antigravity_getIdle.ps1');
+function ensureIdleScript() {
+    if (!fs.existsSync(getIdleScriptPath)) {
+        const psCode = `Add-Type @'
+using System;
+using System.Runtime.InteropServices;
+public class IdleTime {
+    [StructLayout(LayoutKind.Sequential)]
+    struct LASTINPUTINFO {
+        public uint cbSize;
+        public uint dwTime;
+    }
+    [DllImport("user32.dll")]
+    static extern bool GetLastInputInfo(ref LASTINPUTINFO plii);
+    public static uint GetIdle() {
+        LASTINPUTINFO lii = new LASTINPUTINFO();
+        lii.cbSize = (uint)Marshal.SizeOf(typeof(LASTINPUTINFO));
+        GetLastInputInfo(ref lii);
+        return (uint)Environment.TickCount - lii.dwTime;
+    }
+}
+'@
+[IdleTime]::GetIdle()`;
+        fs.writeFileSync(getIdleScriptPath, psCode, 'utf8');
+    }
+}
+function activate(context) {
+    console.log('Antigravity Vintage Polling Auto-Accept is now active!');
+    ensureIdleScript();
+    const provider = new SettingsViewProvider_1.SettingsViewProvider(context.extensionUri);
+    context.subscriptions.push(vscode.window.registerWebviewViewProvider(SettingsViewProvider_1.SettingsViewProvider.viewType, provider));
+    myStatusBarItem = vscode.window.createStatusBarItem(vscode.StatusBarAlignment.Right, 100);
+    myStatusBarItem.command = 'antigravity-auto-accept.toggle';
+    let disposable = vscode.commands.registerCommand('antigravity-auto-accept.toggle', () => {
+        isAutoAcceptEnabled = !isAutoAcceptEnabled;
+        updateStatusBar();
+        if (isAutoAcceptEnabled) {
+            startVintagePolling();
+            vscode.window.showInformationMessage('Vintage Auto-Accept: ON (Warning: May capture window focus)');
+        }
+        else {
+            if (pollingInterval)
+                clearInterval(pollingInterval);
+            pollingInterval = undefined;
+            vscode.window.showInformationMessage('Vintage Auto-Accept: OFF');
+        }
+    });
+    context.subscriptions.push(disposable, myStatusBarItem);
+    updateStatusBar();
+    startVintagePolling();
+}
+function updateStatusBar() {
+    myStatusBarItem.text = isAutoAcceptEnabled ? `$(check) AutoAccept: ON` : `$(x) AutoAccept: OFF`;
+    myStatusBarItem.show();
+}
+function startVintagePolling() {
+    if (pollingInterval)
+        clearInterval(pollingInterval);
+    // 修改为每 1 秒轮询一次，用于支持实时的 UI 状态栏倒计时刷新
+    pollingInterval = setInterval(() => {
+        // 核心修复：当 VS Code 窗口失去焦点（被最小化、或者用户切去了 Chrome 浏览器）时，立刻休眠！
+        if (isAutoAcceptEnabled && !vscode.window.state.focused) {
+            myStatusBarItem.text = `$(eye-closed) AutoAccept: ON | Paused (Background)`;
+            return;
+        }
+        if (!isAutoAcceptEnabled)
+            return;
+        triggerForceFocusKeySimulation();
+    }, 1000);
+}
+// 最原始的自动夺取焦点的 PowerShell 击键
+async function triggerForceFocusKeySimulation() {
+    if (isTriggering || !isAutoAcceptEnabled)
+        return;
+    isTriggering = true;
+    // 查询全局 OS 系统空闲时间：判断用户双手是否停留在键盘上
+    (0, child_process_1.exec)(`powershell -ExecutionPolicy Bypass -File "${getIdleScriptPath}"`, async (err, stdout) => {
+        // 核心修复：因为 exec 是异步的，这里如果被中途通过点击关闭了插件，应该直接退出并维持 OFF 状态
+        if (!isAutoAcceptEnabled) {
+            isTriggering = false;
+            updateStatusBar();
+            return;
+        }
+        if (!err) {
+            const idleMs = parseInt(stdout.trim(), 10);
+            if (!isNaN(idleMs)) {
+                const config = vscode.workspace.getConfiguration('antigravity-auto-accept');
+                const countdownSec = config.get('countdownDuration', 12);
+                const countdownMs = countdownSec * 1000;
+                if (idleMs < countdownMs) {
+                    const remainingSec = Math.ceil((countdownMs - idleMs) / 1000);
+                    myStatusBarItem.text = `$(dashboard) AutoAccept: ON | ${remainingSec}s`;
+                    isTriggering = false;
+                    return;
+                }
+            }
+        }
+        try {
+            console.log(`Executing strict Window Focus + OS Key Simulation: Alt+Enter`);
+            if (isAutoAcceptEnabled) {
+                myStatusBarItem.text = `$(zap) AutoAccept: ON | FIRING!`;
+            }
+            // 加上一步光标侧边栏对焦，防止 Alt+Enter 打进代码里换行
+            try {
+                await vscode.commands.executeCommand('antigravity.agentSidePanel.focus');
+            }
+            catch (e) { }
+            if (!isAutoAcceptEnabled) {
+                isTriggering = false;
+                updateStatusBar();
+                return;
+            }
+            const psCommand = `powershell -c "$wshell = New-Object -ComObject wscript.shell; if($wshell.AppActivate('Code') -or $wshell.AppActivate('Visual Studio Code')) { Start-Sleep -Milliseconds 150; $wshell.SendKeys('%{ENTER}') } else { $wshell.SendKeys('%{ENTER}') }"`;
+            (0, child_process_1.exec)(psCommand, (error) => {
+                if (error)
+                    console.error(`Exec error: ${error}`);
+                updateStatusBar();
+                setTimeout(() => { isTriggering = false; }, 2000); // 间隔两秒后允许下一次触发
+            });
+        }
+        catch (e) {
+            console.error('Failed to simulate keypress', e);
+            updateStatusBar();
+            isTriggering = false;
+        }
+    });
+}
+function deactivate() {
+    if (pollingInterval)
+        clearInterval(pollingInterval);
+}
+//# sourceMappingURL=extension.js.map

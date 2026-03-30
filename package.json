@@ -1,0 +1,71 @@
+{
+    "name": "antigravity-auto-accept-pro",
+    "displayName": "Antigravity Auto-Accept",
+    "description": "Automatically accept Antigravity execution prompts",
+    "version": "0.0.10",
+    "publisher": "hanguangwu",
+    "icon": "icon.png",
+    "engines": {
+        "vscode": "^1.80.0"
+    },
+    "categories": [
+        "Other"
+    ],
+    "activationEvents": [
+        "onStartupFinished"
+    ],
+    "main": "./out/extension.js",
+    "contributes": {
+        "viewsContainers": {
+            "activitybar": [
+                {
+                    "id": "antigravity-sidebar",
+                    "title": "Antigravity",
+                    "icon": "$(zap)"
+                }
+            ]
+        },
+        "views": {
+            "antigravity-sidebar": [
+                {
+                    "type": "webview",
+                    "id": "antigravity-auto-accept.settingsView",
+                    "name": "Auto-Accept Settings"
+                }
+            ]
+        },
+        "commands": [
+            {
+                "command": "antigravity-auto-accept.trigger",
+                "title": "Trigger Antigravity Run"
+            }
+        ],
+        "keybindings": [
+            {
+                "command": "antigravity-auto-accept.trigger",
+                "key": "ctrl+shift+enter",
+                "mac": "cmd+shift+enter"
+            }
+        ],
+        "configuration": {
+            "title": "Antigravity Auto-Accept",
+            "properties": {
+                "antigravity-auto-accept.countdownDuration": {
+                    "type": "number",
+                    "default": 12,
+                    "description": "Countdown duration in seconds before auto-accepting."
+                }
+            }
+        }
+    },
+    "scripts": {
+        "vscode:prepublish": "npm run compile",
+        "compile": "tsc -p ./",
+        "watch": "tsc -watch -p ./"
+    },
+    "devDependencies": {
+        "@types/vscode": "^1.80.0",
+        "@types/node": "18.x",
+        "typescript": "^5.1.3"
+    }
+}
